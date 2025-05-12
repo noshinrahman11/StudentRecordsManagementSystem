@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Records Viewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Student Records Viewer</h1>
+  <table id="studentTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Email</th>
+        <th>Major</th>
+        <th>GPA</th>
+        <th>Graduation Year</th>
+        <th>Phone</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+    
+    const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadStudents() {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching data:', error);
+        alert('Failed to load student data.');
+        return;
+      }
+
+      const tbody = document.querySelector('#studentTable tbody');
+      tbody.innerHTML = '';
+
+      data.forEach(student => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${student.id}</td>
+          <td>${student.first_name}</td>
+          <td>${student.last_name}</td>
+          <td>${student.email}</td>
+          <td>${student.major}</td>
+          <td>${student.gpa}</td>
+          <td>${student.graduation_year}</td>
+          <td>${student.phone_number}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    loadStudents();
+  </script>
+</body>
+</html>
