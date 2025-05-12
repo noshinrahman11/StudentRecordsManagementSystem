@@ -23,42 +23,43 @@
     </div>
 
     <!-- Profile Section -->
-    <div id="profile">
+    <div id="profile" style="display:none;">
         <h2>Your Profile</h2>
         <p id="studentInfo"></p>
         <button onclick="editProfile()">Edit Profile</button>
     </div>
 
     <!-- Course Grades Section -->
-    <div id="courseGrades">
+    <div id="courseGrades" style="display:none;">
         <h2>Your Courses and Grades</h2>
         <ul id="gradesList"></ul>
     </div>
 
     <!-- Instructor View Section -->
-    <div id="instructorView">
+    <div id="instructorView" style="display:none;">
         <h2>Instructor View</h2>
         <div id="studentsList"></div>
     </div>
 
     <script>
-        // const SUPABASE_URL = 'postgresql://postgres:p2nCM3XUBg6SfmPJ@db.winwexubflhwzhlxqolm.supabase.co:5432/postgres';
-        // const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbndleHViZmxod3pobHhxb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwMTYwMTIsImV4cCI6MjA2MjU5MjAxMn0.hhzm0DegFolQb1nTo2FMEKGKDm3ESmFOWjvmV8e5xw0';
-
         const supabaseUrl = 'postgresql://postgres:p2nCM3XUBg6SfmPJ@db.winwexubflhwzhlxqolm.supabase.co:5432/postgres';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbndleHViZmxod3pobHhxb2xtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwMTYwMTIsImV4cCI6MjA2MjU5MjAxMn0.hhzm0DegFolQb1nTo2FMEKGKDm3ESmFOWjvmV8e5xw0'
         const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         // Sign in with GitHub
         async function signInWithGitHub() {
-            const { user, error } = await supabase.auth.signIn({ provider: 'github' });
-
-            if (error) {
-                console.error(error.message);
-                return;
+            try {
+                const { user, error } = await supabase.auth.signIn({ provider: 'github' });
+                if (error) {
+                    console.error('GitHub sign-in error:', error.message);
+                    alert('GitHub sign-in failed: ' + error.message);
+                    return;
+                }
+                console.log('GitHub Sign-in successful:', user);
+                loadProfile(user.id);
+            } catch (err) {
+                console.error('GitHub sign-in error:', err);
             }
-
-            loadProfile(user.id);
         }
 
         // Sign in with Email/Password
@@ -66,17 +67,18 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            const { user, error } = await supabase.auth.signIn({
-                email: email,
-                password: password
-            });
-
-            if (error) {
-                console.error(error.message);
-                return;
+            try {
+                const { user, error } = await supabase.auth.signIn({ email, password });
+                if (error) {
+                    console.error('Email sign-in error:', error.message);
+                    alert('Email sign-in failed: ' + error.message);
+                    return;
+                }
+                console.log('Email Sign-in successful:', user);
+                loadProfile(user.id);
+            } catch (err) {
+                console.error('Email sign-in error:', err);
             }
-
-            loadProfile(user.id);
         }
 
         // Sign Up with Email/Password
@@ -84,71 +86,84 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            const { user, error } = await supabase.auth.signUp({
-                email: email,
-                password: password
-            });
-
-            if (error) {
-                console.error(error.message);
-                return;
+            try {
+                const { user, error } = await supabase.auth.signUp({ email, password });
+                if (error) {
+                    console.error('Email sign-up error:', error.message);
+                    alert('Email sign-up failed: ' + error.message);
+                    return;
+                }
+                console.log('Email Sign-up successful:', user);
+                alert('Sign-up successful! Please check your email for confirmation.');
+            } catch (err) {
+                console.error('Sign-up error:', err);
             }
-
-            alert('Sign-up successful! Please check your email for confirmation.');
         }
 
         // Sign Out
         async function signOut() {
-            const { error } = await supabase.auth.signOut();
-
-            if (error) {
-                console.error(error.message);
-                return;
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                    console.error('Sign-out error:', error.message);
+                    return;
+                }
+                console.log('Sign-out successful');
+                document.getElementById('studentInfo').textContent = '';
+                document.getElementById('gradesList').innerHTML = '';
+                document.getElementById('profile').style.display = 'none';
+                document.getElementById('courseGrades').style.display = 'none';
+                document.getElementById('instructorView').style.display = 'none';
+            } catch (err) {
+                console.error('Sign-out error:', err);
             }
-
-            document.getElementById('studentInfo').textContent = '';
-            document.getElementById('gradesList').innerHTML = '';
         }
 
         // Load Profile Data
         async function loadProfile(userId) {
-            const { data: studentData, error } = await supabase
-                .from('students')
-                .select('first_name, last_name, email')
-                .eq('user_id', userId)
-                .single();
-
-            if (error) {
-                console.error(error.message);
-                return;
+            try {
+                const { data: studentData, error } = await supabase
+                    .from('students')
+                    .select('first_name, last_name, email')
+                    .eq('user_id', userId)
+                    .single();
+                if (error) {
+                    console.error('Error loading profile:', error.message);
+                    return;
+                }
+                console.log('Profile data:', studentData);
+                document.getElementById('studentInfo').textContent = `Name: ${studentData.first_name} ${studentData.last_name}, Email: ${studentData.email}`;
+                document.getElementById('profile').style.display = 'block';
+                loadGrades(userId);
+                loadInstructorView(userId);
+            } catch (err) {
+                console.error('Error loading profile:', err);
             }
-
-            document.getElementById('studentInfo').textContent = `Name: ${studentData.first_name} ${studentData.last_name}, Email: ${studentData.email}`;
-
-            loadGrades(userId);
-            loadInstructorView(userId);
         }
 
         // Load Student Grades
         async function loadGrades(userId) {
-            const { data: gradesData, error } = await supabase
-                .from('grades')
-                .select('course_name, grade')
-                .eq('student_id', userId);
-
-            if (error) {
-                console.error(error.message);
-                return;
+            try {
+                const { data: gradesData, error } = await supabase
+                    .from('grades')
+                    .select('course_name, grade')
+                    .eq('student_id', userId);
+                if (error) {
+                    console.error('Error loading grades:', error.message);
+                    return;
+                }
+                console.log('Grades data:', gradesData);
+                const gradesList = document.getElementById('gradesList');
+                gradesList.innerHTML = '';
+                gradesData.forEach(grade => {
+                    const li = document.createElement('li');
+                    li.textContent = `Course: ${grade.course_name}, Grade: ${grade.grade}`;
+                    gradesList.appendChild(li);
+                });
+                document.getElementById('courseGrades').style.display = 'block';
+            } catch (err) {
+                console.error('Error loading grades:', err);
             }
-
-            const gradesList = document.getElementById('gradesList');
-            gradesList.innerHTML = '';
-
-            gradesData.forEach(grade => {
-                const li = document.createElement('li');
-                li.textContent = `Course: ${grade.course_name}, Grade: ${grade.grade}`;
-                gradesList.appendChild(li);
-            });
         }
 
         // Edit Profile
@@ -156,56 +171,63 @@
             const firstName = prompt('Enter your first name:');
             const lastName = prompt('Enter your last name:');
 
-            const { error } = await supabase
-                .from('students')
-                .update({ first_name: firstName, last_name: lastName })
-                .eq('user_id', supabase.auth.user().id);
-
-            if (error) {
-                console.error(error.message);
-                return;
+            try {
+                const { error } = await supabase
+                    .from('students')
+                    .update({ first_name: firstName, last_name: lastName })
+                    .eq('user_id', supabase.auth.user().id);
+                if (error) {
+                    console.error('Error editing profile:', error.message);
+                    return;
+                }
+                loadProfile(supabase.auth.user().id);
+            } catch (err) {
+                console.error('Error editing profile:', err);
             }
-
-            loadProfile(supabase.auth.user().id);
         }
 
         // Instructor View to see all students
         async function loadInstructorView(userId) {
-            const { data: profileData, error } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', userId)
-                .single();
+            try {
+                const { data: profileData, error } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', userId)
+                    .single();
+                if (error) {
+                    console.error('Error loading instructor data:', error.message);
+                    return;
+                }
 
-            if (error) {
-                console.error(error.message);
-                return;
-            }
-
-            if (profileData.role === 'instructor') {
-                loadAllStudents();
+                if (profileData.role === 'instructor') {
+                    loadAllStudents();
+                }
+            } catch (err) {
+                console.error('Error loading instructor view:', err);
             }
         }
 
         // Load All Students for Instructor
         async function loadAllStudents() {
-            const { data: studentsData, error } = await supabase
-                .from('students')
-                .select('first_name, last_name, email');
-
-            if (error) {
-                console.error(error.message);
-                return;
+            try {
+                const { data: studentsData, error } = await supabase
+                    .from('students')
+                    .select('first_name, last_name, email');
+                if (error) {
+                    console.error('Error loading students:', error.message);
+                    return;
+                }
+                const studentsList = document.getElementById('studentsList');
+                studentsList.innerHTML = '';
+                studentsData.forEach(student => {
+                    const p = document.createElement('p');
+                    p.textContent = `Name: ${student.first_name} ${student.last_name}, Email: ${student.email}`;
+                    studentsList.appendChild(p);
+                });
+                document.getElementById('instructorView').style.display = 'block';
+            } catch (err) {
+                console.error('Error loading all students:', err);
             }
-
-            const studentsList = document.getElementById('studentsList');
-            studentsList.innerHTML = '';
-
-            studentsData.forEach(student => {
-                const p = document.createElement('p');
-                p.textContent = `Name: ${student.first_name} ${student.last_name}, Email: ${student.email}`;
-                studentsList.appendChild(p);
-            });
         }
     </script>
 </body>
